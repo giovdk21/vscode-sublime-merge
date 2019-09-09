@@ -25,8 +25,8 @@ export function activate(context: vscode.ExtensionContext) {
 	let fileHistoryInSublimeMerge = vscode.commands.registerCommand('vscsm.fileHistoryInSublimeMerge', () => {
 		const editor = vscode.window.activeTextEditor;
 		if (editor) {
-			const relativeFilePath = vscode.workspace.asRelativePath(editor.document.uri);
-			getGitConfig('user.name', editor.document.uri); // TODO!
+			const relativeFilePath = vscode.workspace.asRelativePath(editor.document.uri, false);
+			getGitConfig('user.name', editor.document.uri);
 
 			runSublimeMerge(['search', 'file:"' + relativeFilePath], editor.document.uri);
 		}
@@ -36,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
 		const editor = vscode.window.activeTextEditor;
 		if (editor) {
 			const selectionInfo = editor.selection;
-			const relativeFilePath = vscode.workspace.asRelativePath(editor.document.uri);
+			const relativeFilePath = vscode.workspace.asRelativePath(editor.document.uri, false);
 			const searchQuery = 'file:"' + relativeFilePath +
 				'" line:' + String(selectionInfo.start.line + 1) + '-' + String(selectionInfo.end.line + 1);
 
