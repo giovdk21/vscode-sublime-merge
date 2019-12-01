@@ -2,7 +2,7 @@
 	"name": "vscode-sublime-merge",
 	"displayName": "Sublime Merge for VSCode",
 	"description": "Open repository, file history, blame, etc.",
-	"version": "0.0.2",
+	"version": "0.1.0",
 	"license": "MIT",
 	"author": {
 		"name": "Giovanni Derks"
@@ -26,6 +26,9 @@
 		"blame",
 		"log",
 		"history"
+	],
+	"extensionDependencies": [
+		"vscode.git"
 	],
 	"activationEvents": [
 		"workspaceContains:.git"
@@ -99,6 +102,21 @@
 					"group": "vscode_sublmerge"
 				}
 			]
+		},
+		"configuration": {
+			"title": "Sublime Merge for VSCode",
+			"properties": {
+				"vscsm.showInStatusBar": {
+					"type": "boolean",
+					"default": true,
+					"description": "Set to false to disable the Sublime Merge for VSCode status bar item"
+				},
+				"vscsm.debug": {
+					"type": "boolean",
+					"default": false,
+					"description": "Set to true to enable debug mode (requires restart)"
+				}
+			}
 		}
 	},
 	"scripts": {
