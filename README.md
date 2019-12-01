@@ -13,7 +13,14 @@ command palette when in a workspace with a Git repository:
 - `Line history in Sublime Merge`: Shows the history of the **selected line(s)** in Sublime Merge
 - `Show my commits in Sublime Merge`: Show commits from the **current Git user** in Sublime Merge
 
-Contextual menu items for the editor are also provided and dependent on whether a selection is present or not.
+**Note:** Contextual menu items for the editor are also provided and dependent on whether a selection is present or not.
+
+### Status Bar
+
+![Status Bar](assets/status_bar.png)
+
+The extension shows the number of unstaged / to be committed files in the status bar.  
+Clicking on the status bar item will open Sublime Merge.
 
 ## Requirements
 
@@ -22,6 +29,15 @@ Make sure that `git` and the `smerge` commands are available within your PATH.
 ### Setting up the Sublime Merge command line tool
 
 See: https://www.sublimemerge.com/docs/command_line
+
+## Configuration
+
+```js
+{
+	"vscsm.debug": false, // Enable debug information in the output panel; default: false
+	"vscsm.showInStatusBar": false // Disables the status bar item if false; default: true
+}
+```
 
 ## Sublime Merge setup (optional)
 
