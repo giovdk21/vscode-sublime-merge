@@ -2,7 +2,7 @@
 	"name": "vscode-sublime-merge",
 	"displayName": "Sublime Merge for VSCode",
 	"description": "Open repository, file history, blame, etc.",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"license": "MIT",
 	"author": {
 		"name": "Giovanni Derks"
@@ -132,9 +132,9 @@
 		"@types/node": "^10.12.21",
 		"@types/vscode": "^1.38.0",
 		"glob": "^7.1.4",
-		"mocha": "^6.1.4",
-		"typescript": "^3.3.1",
+		"mocha": "^6.2.3",
 		"tslint": "^5.12.1",
+		"typescript": "^3.3.1",
 		"vscode-test": "^1.0.2"
 	}
 }
