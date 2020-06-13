@@ -90,8 +90,8 @@ function getGitConfig(param: string, currentDocumentURI: vscode.Uri) {
 	if (!path) {
 		return null;
 	}
-	let output;
 
+	let output;
 	try {
 		output = execFileSync('git', ['config', param], { cwd: path });
 	} catch (e) {

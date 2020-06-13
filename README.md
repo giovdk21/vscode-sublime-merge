@@ -13,7 +13,8 @@ command palette when in a workspace with a Git repository:
 - `Line history in Sublime Merge`: Shows the history of the **selected line(s)** in Sublime Merge
 - `Show my commits in Sublime Merge`: Show commits from the **current Git user** in Sublime Merge
 
-**Note:** Contextual menu items for the editor are also provided and dependent on whether a selection is present or not.
+**Note:** Contextual menu items for the editor are also provided and their visibility can be
+customised changing the extension settings (see "Configuration").
 
 ### Status Bar
 
@@ -35,7 +36,15 @@ See: https://www.sublimemerge.com/docs/command_line
 ```js
 {
 	"vscsm.debug": false, // Enable debug information in the output panel; default: false
-	"vscsm.showInStatusBar": false // Disables the status bar item if false; default: true
+	"vscsm.showInStatusBar": false, // Disables the status bar item if false; default: true
+
+	// Custom contextual menu items visibility:
+	// (see inline help for details)
+	"vscsm.showMenu.openInSublimeMerge": false,
+	"vscsm.showMenu.fileHistoryInSublimeMerge": "always",
+	"vscsm.showMenu.lineHistoryInSublimeMerge": "withSelection",
+	"vscsm.showMenu.myCommitsInSublimeMerge": "never",
+	"vscsm.showMenu.blameInSublimeMerge": "withSelection",
 }
 ```
 

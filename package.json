@@ -2,7 +2,7 @@
 	"name": "vscode-sublime-merge",
 	"displayName": "Sublime Merge for VSCode",
 	"description": "Open repository, file history, blame, etc.",
-	"version": "0.1.2",
+	"version": "1.0.1",
 	"license": "MIT",
 	"author": {
 		"name": "Giovanni Derks"
@@ -15,7 +15,7 @@
 	},
 	"icon": "icon.png",
 	"engines": {
-		"vscode": "^1.38.0"
+		"vscode": "^1.46.0"
 	},
 	"categories": [
 		"Other"
@@ -82,24 +82,49 @@
 			],
 			"editor/context": [
 				{
-					"command": "vscsm.fileHistoryInSublimeMerge",
-					"when": "!editorHasSelection && config.git.enabled && gitOpenRepositoryCount != 0",
-					"group": "vscode_sublmerge"
+					"command": "vscsm.openInSublimeMerge",
+					"when": "config.vscsm.showMenu.openInSublimeMerge && config.git.enabled && gitOpenRepositoryCount != 0",
+					"group": "vscode_sublmerge@1"
 				},
 				{
-					"command": "vscsm.myCommitsInSublimeMerge",
-					"when": "!editorHasSelection && config.git.enabled && gitOpenRepositoryCount != 0",
-					"group": "vscode_sublmerge"
+					"command": "vscsm.fileHistoryInSublimeMerge",
+					"when": "config.vscsm.showMenu.fileHistoryInSublimeMerge == 'always' && config.git.enabled && gitOpenRepositoryCount != 0",
+					"group": "vscode_sublmerge@2"
+				},
+				{
+					"command": "vscsm.fileHistoryInSublimeMerge",
+					"when": "!editorHasSelection && config.vscsm.showMenu.fileHistoryInSublimeMerge == 'withoutSelection' && config.git.enabled && gitOpenRepositoryCount != 0",
+					"group": "vscode_sublmerge@2"
 				},
 				{
 					"command": "vscsm.lineHistoryInSublimeMerge",
-					"when": "editorHasSelection && config.git.enabled && gitOpenRepositoryCount != 0",
-					"group": "vscode_sublmerge"
+					"when": "config.vscsm.showMenu.lineHistoryInSublimeMerge == 'always' && config.git.enabled && gitOpenRepositoryCount != 0",
+					"group": "vscode_sublmerge@3"
+				},
+				{
+					"command": "vscsm.lineHistoryInSublimeMerge",
+					"when": "editorHasSelection && config.vscsm.showMenu.lineHistoryInSublimeMerge == 'withSelection' && config.git.enabled && gitOpenRepositoryCount != 0",
+					"group": "vscode_sublmerge@3"
+				},
+				{
+					"command": "vscsm.myCommitsInSublimeMerge",
+					"when": "config.vscsm.showMenu.myCommitsInSublimeMerge == 'always' && config.git.enabled && gitOpenRepositoryCount != 0",
+					"group": "vscode_sublmerge@4"
+				},
+				{
+					"command": "vscsm.myCommitsInSublimeMerge",
+					"when": "!editorHasSelection && config.vscsm.showMenu.myCommitsInSublimeMerge == 'withoutSelection' && config.git.enabled && gitOpenRepositoryCount != 0",
+					"group": "vscode_sublmerge@4"
 				},
 				{
 					"command": "vscsm.blameInSublimeMerge",
-					"when": "editorHasSelection && config.git.enabled && gitOpenRepositoryCount != 0",
-					"group": "vscode_sublmerge"
+					"when": "config.vscsm.showMenu.blameInSublimeMerge == 'always' && config.git.enabled && gitOpenRepositoryCount != 0",
+					"group": "vscode_sublmerge@5"
+				},
+				{
+					"command": "vscsm.blameInSublimeMerge",
+					"when": "editorHasSelection && config.vscsm.showMenu.blameInSublimeMerge == 'withSelection'  && config.git.enabled && gitOpenRepositoryCount != 0",
+					"group": "vscode_sublmerge@5"
 				}
 			]
 		},
@@ -110,6 +135,71 @@
 					"type": "boolean",
 					"default": true,
 					"description": "Set to false to disable the Sublime Merge for VSCode status bar item"
+				},
+				"vscsm.showMenu.openInSublimeMerge": {
+					"type": "boolean",
+					"default": true,
+					"description": "Show the \"Open repository in Sublime Merge\" command in the contextual menu"
+				},
+				"vscsm.showMenu.fileHistoryInSublimeMerge": {
+					"type": "string",
+					"default": "always",
+					"enum": [
+						"always",
+						"withoutSelection",
+						"never"
+					],
+					"enumDescriptions": [
+						"Always show",
+						"Show only when no text is selected",
+						"Don't show"
+					],
+					"description": "Show the \"File history in Sublime Merge\" command in the contextual menu"
+				},
+				"vscsm.showMenu.myCommitsInSublimeMerge": {
+					"type": "string",
+					"default": "always",
+					"enum": [
+						"always",
+						"withoutSelection",
+						"never"
+					],
+					"enumDescriptions": [
+						"Always show",
+						"Show only when no text is selected",
+						"Don't show"
+					],
+					"description": "Show the \"Show my commits in Sublime Merge\" command in the contextual menu"
+				},
+				"vscsm.showMenu.lineHistoryInSublimeMerge": {
+					"type": "string",
+					"default": "always",
+					"enum": [
+						"always",
+						"withSelection",
+						"never"
+					],
+					"enumDescriptions": [
+						"Always show",
+						"Show only when some text is selected",
+						"Don't show"
+					],
+					"description": "Show the \"Line history in Sublime Merge\" command in the contextual menu"
+				},
+				"vscsm.showMenu.blameInSublimeMerge": {
+					"type": "string",
+					"default": "always",
+					"enum": [
+						"always",
+						"withSelection",
+						"never"
+					],
+					"enumDescriptions": [
+						"Always show",
+						"Show only when some text is selected",
+						"Don't show"
+					],
+					"description": "Show the \"Blame in Sublime Merge\" command in the contextual menu"
 				},
 				"vscsm.debug": {
 					"type": "boolean",
@@ -127,14 +217,14 @@
 		"test": "node ./out/test/runTest.js"
 	},
 	"devDependencies": {
-		"@types/glob": "^7.1.1",
-		"@types/mocha": "^5.2.6",
-		"@types/node": "^10.12.21",
-		"@types/vscode": "^1.38.0",
-		"glob": "^7.1.4",
-		"mocha": "^6.2.3",
-		"tslint": "^5.12.1",
-		"typescript": "^3.3.1",
-		"vscode-test": "^1.0.2"
+		"@types/glob": "^7.1.2",
+		"@types/mocha": "^7.0.2",
+		"@types/node": "^14.0.13",
+		"@types/vscode": "^1.46.0",
+		"glob": "^7.1.6",
+		"mocha": "^8.0.1",
+		"tslint": "^6.1.2",
+		"typescript": "^3.9.5",
+		"vscode-test": "^1.4.0"
 	}
 }
