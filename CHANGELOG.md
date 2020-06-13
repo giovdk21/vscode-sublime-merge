@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.0.0] - 2020-06-13
+
+- Added configuration settings to customise contextual menu items visibility
+
 ## [0.1.0] - 2019-12-01
 
 - Added status bar item
