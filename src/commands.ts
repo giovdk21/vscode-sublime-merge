@@ -1,103 +1,132 @@
 'use strict';
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { execFile, execFileSync } from 'child_process';
+import { LoggingService } from './lib/LoggingService';
+import { Repositories } from './lib/Repositories';
 
-export function registerCommands(context: vscode.ExtensionContext) {
-	let openInSublimeMerge = vscode.commands.registerCommand('vscsm.openInSublimeMerge', () => {
-		const editor = vscode.window.activeTextEditor;
-		if (editor) {
-			runSublimeMerge(['.'], editor.document.uri);
-		}
-	});
+export class RegisterCommands {
+	private _context: vscode.ExtensionContext;
+	private _loggingService: LoggingService;
+	private _repositories: Repositories;
 
-	let blameInSublimeMerge = vscode.commands.registerCommand('vscsm.blameInSublimeMerge', () => {
-		const editor = vscode.window.activeTextEditor;
-		if (editor) {
-			const selectionInfo = editor.selection;
-			runSublimeMerge(['blame', editor.document.fileName, String(selectionInfo.start.line)], editor.document.uri);
-		}
-	});
+	constructor(context: vscode.ExtensionContext, repositories: Repositories, loggingService: LoggingService) {
+		this._context = context;
+		this._loggingService = loggingService;
+		this._repositories = repositories;
+	}
 
-	let fileHistoryInSublimeMerge = vscode.commands.registerCommand('vscsm.fileHistoryInSublimeMerge', () => {
-		const editor = vscode.window.activeTextEditor;
-		if (editor) {
-			const relativeFilePath = vscode.workspace.asRelativePath(editor.document.uri, false);
-			getGitConfig('user.name', editor.document.uri);
+	init() {
+		let openInSublimeMerge = vscode.commands.registerCommand('vscsm.openInSublimeMerge', () => {
+			this._runSublimeMerge(['.']);
+		});
 
-			runSublimeMerge(['search', 'file:"' + relativeFilePath], editor.document.uri);
-		}
-	});
+		let blameInSublimeMerge = vscode.commands.registerCommand('vscsm.blameInSublimeMerge', () => {
+			const editor = vscode.window.activeTextEditor;
+			if (editor) {
+				const selectionInfo = editor.selection;
+				this._runSublimeMerge(['blame', editor.document.fileName, String(selectionInfo.start.line)]);
+			}
+		});
 
-	let lineHistoryInSublimeMerge = vscode.commands.registerCommand('vscsm.lineHistoryInSublimeMerge', () => {
-		const editor = vscode.window.activeTextEditor;
-		if (editor) {
-			const selectionInfo = editor.selection;
-			const relativeFilePath = vscode.workspace.asRelativePath(editor.document.uri, false);
-			const searchQuery =
-				'file:"' +
-				relativeFilePath +
-				'" line:' +
-				String(selectionInfo.start.line + 1) +
-				'-' +
-				String(selectionInfo.end.line + 1);
+		let fileHistoryInSublimeMerge = vscode.commands.registerCommand('vscsm.fileHistoryInSublimeMerge', () => {
+			this._runSublimeMerge(['search', 'file:"' + this._currentFileRelativePathToRepo()]);
+		});
 
-			runSublimeMerge(['search', searchQuery], editor.document.uri);
-		}
-	});
+		let lineHistoryInSublimeMerge = vscode.commands.registerCommand('vscsm.lineHistoryInSublimeMerge', () => {
+			const editor = vscode.window.activeTextEditor;
+			if (editor) {
+				const selectionInfo = editor.selection;
+				const searchQuery =
+					'file:"' + this._currentFileRelativePathToRepo() +
+					'" line:' +
+					String(selectionInfo.start.line + 1) +
+					'-' +
+					String(selectionInfo.end.line + 1);
 
-	let myCommitsInSublimeMerge = vscode.commands.registerCommand('vscsm.myCommitsInSublimeMerge', () => {
-		const editor = vscode.window.activeTextEditor;
-		if (editor) {
-			const gitUsername = getGitConfig('user.name', editor.document.uri);
+				this._runSublimeMerge(['search', searchQuery]);
+			}
+		});
+
+		let myCommitsInSublimeMerge = vscode.commands.registerCommand('vscsm.myCommitsInSublimeMerge', () => {
+			const gitUsername = this.getGitConfig('user.name');
 			if (!gitUsername) {
 				vscode.window.showWarningMessage('Failed to determine your git username from your configuration');
 				return;
 			}
 
-			runSublimeMerge(['search', 'author:"' + gitUsername + '"'], editor.document.uri);
-		}
-	});
+			this._runSublimeMerge(['search', 'author:"' + gitUsername + '"']);
+		});
 
-	context.subscriptions.push(openInSublimeMerge);
-	context.subscriptions.push(blameInSublimeMerge);
-	context.subscriptions.push(fileHistoryInSublimeMerge);
-	context.subscriptions.push(lineHistoryInSublimeMerge);
-	context.subscriptions.push(myCommitsInSublimeMerge);
-}
+		this._context.subscriptions.push(openInSublimeMerge);
+		this._context.subscriptions.push(blameInSublimeMerge);
+		this._context.subscriptions.push(fileHistoryInSublimeMerge);
+		this._context.subscriptions.push(lineHistoryInSublimeMerge);
+		this._context.subscriptions.push(myCommitsInSublimeMerge);
+	}
 
-function runSublimeMerge(args: string[], currentDocumentURI: vscode.Uri) {
-	if (currentDocumentURI.scheme === 'file') {
-		const path = getWorkspaceFolderPath(currentDocumentURI);
+
+	private _runSublimeMerge(args: string[]) {
+		const path = this._getCurrentFileRepoPath();
 		if (!path) {
 			return null;
 		}
 
 		execFile('smerge', args, { cwd: path });
 	}
-}
 
-function getWorkspaceFolderPath(currentDocumentURI: vscode.Uri) {
-	const folder = vscode.workspace.getWorkspaceFolder(currentDocumentURI);
-	if (!folder) {
+	private _currentFileUri(): vscode.Uri | null {
+		const editor = vscode.window.activeTextEditor;
+		if (editor && editor.document.uri.scheme === 'file') {
+			return editor.document.uri;
+		}
+
 		return null;
 	}
 
-	return folder.uri.fsPath;
-}
+	private _getCurrentFileRepoPath(): string | null {
+		const fileUri = this._currentFileUri();
 
-function getGitConfig(param: string, currentDocumentURI: vscode.Uri) {
-	const path = getWorkspaceFolderPath(currentDocumentURI);
-	if (!path) {
+		if (fileUri) {
+			return this._getRepositoryPath(fileUri);
+		}
+
 		return null;
 	}
 
-	let output;
-	try {
-		output = execFileSync('git', ['config', param], { cwd: path });
-	} catch (e) {
-		console.log('Error while reading Git config (' + param + '): ' + e);
+	private _getRepositoryPath(fileUri: vscode.Uri) {
+		const repo = this._repositories.repoForFile(fileUri);
+
+		if (repo) {
+			return repo.rootUri.fsPath;
+		}
+
 		return null;
 	}
 
-	return output.toString().trimRight();
+	private _currentFileRelativePathToRepo(): string {
+		const fileUri = this._currentFileUri();
+		if (!fileUri) { return ''; }
+		const repoPath = this._getRepositoryPath(fileUri);
+		if (!repoPath) { return ''; }
+
+		return path.relative(repoPath, fileUri.fsPath);
+	}
+
+	private getGitConfig(param: string) {
+		const path = this._getCurrentFileRepoPath();
+		if (!path) {
+			return null;
+		}
+
+		let output;
+		try {
+			output = execFileSync('git', ['config', param], { cwd: path });
+		} catch (e) {
+			this._loggingService.logError('Error while reading Git config (' + param + '): ' + e);
+			return null;
+		}
+
+		return output.toString().trimRight();
+	}
 }

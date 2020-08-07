@@ -4,19 +4,23 @@
 import { ExtensionContext } from 'vscode';
 import { Configuration } from './configuration';
 import { LoggingService } from "./lib/LoggingService";
-import { registerCommands } from './commands';
+import { Repositories } from "./lib/Repositories";
+import { RegisterCommands } from './commands';
 import { StatusBar } from './status_bar';
 
 let statusBar: StatusBar;
+let repositories: Repositories;
 
 // this method is called when the extension is activated
 export function activate(context: ExtensionContext) {
 	const config = new Configuration();
 	const loggingService = new LoggingService(config);
+	repositories = new Repositories(loggingService);
+	const registerCommands = new RegisterCommands(context, repositories, loggingService);
 
-	registerCommands(context);
+	registerCommands.init();
 
-	statusBar = new StatusBar(config.showInStatusBar, loggingService);
+	statusBar = new StatusBar(config.showInStatusBar, repositories, loggingService);
 	context.subscriptions.push(config.onDidShowInStatusBarChange(() => {
 		config.showInStatusBar ? statusBar.enable() : statusBar.disable();
 	}));
@@ -25,4 +29,5 @@ export function activate(context: ExtensionContext) {
 // this method is called when the extension is deactivated
 export function deactivate() {
 	statusBar.disposeSubscriptions();
+	repositories.disposeSubscriptions();
 }

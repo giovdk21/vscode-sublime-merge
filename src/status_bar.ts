@@ -2,18 +2,18 @@
 import * as vscode from 'vscode';
 import { API, APIState, GitExtension, Repository } from './api/git';
 import { LoggingService } from './lib/LoggingService';
+import { Repositories } from './lib/Repositories';
 
 export class StatusBar {
 	private _statusBar: vscode.StatusBarItem;
-	private _git: API;
 	private _loggingService: LoggingService;
-	private _workspaceRepos: { [key: number]: Repository } = {};
 	private _subscriptions: vscode.Disposable[] = [];
 	private _repoSubscriptions: vscode.Disposable[] = [];
+	private _repositories: Repositories;
 
-	constructor(show: boolean, loggingService: LoggingService) {
+	constructor(show: boolean, repositories: Repositories, loggingService: LoggingService) {
 		this._loggingService = loggingService;
-		this._git = this._gitAPI;
+		this._repositories = repositories;
 		this._statusBar = this._setup();
 
 		if (show) {
@@ -23,7 +23,7 @@ export class StatusBar {
 
 	enable() {
 		this._loggingService.logInfo('Enabling Status Bar');
-		this._loadRepositories();
+		this._setupRepositories();
 		this._setupSubscriptions();
 		this._statusBar.show();
 	}
@@ -36,7 +36,7 @@ export class StatusBar {
 
 	disposeSubscriptions() {
 		this._resetRepositories();
-		this._loggingService.logInfo('Dispose Subscriptions');
+		this._loggingService.logInfo('StatusBar: Dispose Subscriptions');
 		this._subscriptions.every(subscription => {
 			subscription.dispose();
 		});
@@ -46,14 +46,22 @@ export class StatusBar {
 	private _setupSubscriptions() {
 		if (this._subscriptions.length === 0) {
 			this._subscriptions.push(vscode.window.onDidChangeActiveTextEditor(this._handleActiveTextEditorChange, this));
-			this._subscriptions.push(this._git.onDidOpenRepository(this._handleOpenRepository, this));
-			this._subscriptions.push(this._git.onDidChangeState(this._handleDidChangeState, this));
+
 			this._subscriptions.push(
 				vscode.workspace.onDidChangeWorkspaceFolders(() => {
 					this._resetRepositories();
-					this._loadRepositories();
+					this._setupRepositories();
 				})
 			);
+
+			this._subscriptions.push(
+				this._repositories.onRepositoriesDidChange(() => {
+					this._resetRepositories();
+					this._setupRepositories();
+				})
+			);
+
+			this._subscriptions.push(this._repositories.onDidInitialize(this._setupRepositories, this));
 
 			this._loggingService.logInfo('Setup Subscriptions (' + this._subscriptions.length + ')');
 		}
@@ -72,7 +80,7 @@ export class StatusBar {
 
 		this._repoSubscriptions.push(
 			repo.state.onDidChange(() => {
-				this._loggingService.logInfo('Repo State Change');
+				this._loggingService.logInfo(`Repo State Change (${repo.rootUri.toString()})`);
 				this._updateStatusBarForActiveEditor();
 			})
 		);
@@ -80,7 +88,7 @@ export class StatusBar {
 		this._repoSubscriptions.push(
 			repo.ui.onDidChange(() => {
 				if (repo.ui.selected) {
-					this._loggingService.logInfo('Repo UI Change');
+					this._loggingService.logInfo(`Repo UI Change (${repo.rootUri.toString()})`);
 					this._updateStatusBar(repo);
 				}
 			})
@@ -107,7 +115,7 @@ export class StatusBar {
 		const unstaged = repo.state.workingTreeChanges.length;
 		const staged = repo.state.indexChanges.length;
 
-		this._loggingService.logInfo('Update Status Bar');
+		this._loggingService.logInfo(`Update Status Bar (${repo.rootUri.toString()})`);
 
 		this._statusBar.text = '$(git-branch) ' + unstaged + ' $(git-commit) ' + staged;
 		this._statusBar.tooltip = 'Open in Sublime Merge\n\nUnstaged: ' + unstaged + '\nTo be committed: ' + staged;
@@ -120,18 +128,9 @@ export class StatusBar {
 		}
 	}
 
-	private get _gitAPI(): API {
-		const gitExtension = vscode.extensions.getExtension<GitExtension>('vscode.git')!.exports;
-		return gitExtension.getAPI(1);
-	}
-
 	private _editorRepository(editor: vscode.TextEditor | undefined): Repository | null {
 		if (editor) {
-			const workspaceIndex = vscode.workspace.getWorkspaceFolder(editor.document.uri)!.index;
-
-			if (this._workspaceRepos[workspaceIndex]) {
-				return this._workspaceRepos[workspaceIndex];
-			}
+			return this._repositories.repoForFile(editor.document.uri);
 		}
 
 		return null;
@@ -154,39 +153,11 @@ export class StatusBar {
 	private _resetRepositories() {
 		this._loggingService.logInfo('Reset repositories');
 		this._disposeRepoSubscriptions();
-		this._workspaceRepos = {};
 	}
 
-	private _loadRepositories() {
-		if (this._git.state === 'initialized') {
-			this._git.repositories.forEach(repo => {
-				this._addWorkspaceRepo(repo);
-			});
-
-			this._loggingService.logInfo('Loaded workspace repositories');
-		}
-	}
-
-	private _addWorkspaceRepo(repo: Repository) {
-		const workspaceFolder = vscode.workspace.getWorkspaceFolder(repo.rootUri);
-
-		if (workspaceFolder && !this._workspaceRepos[workspaceFolder.index]) {
-			this._loggingService.logInfo('Add Workspace Repo. ' + workspaceFolder.index + ': ' + repo.rootUri.toString());
+	private _setupRepositories() {
+		this._repositories.repositories.forEach(repo => {
 			this._setupRepoSubscriptions(repo);
-			this._workspaceRepos[workspaceFolder.index] = repo;
-		}
-	}
-
-	private _handleOpenRepository(repo: Repository) {
-		this._loggingService.logInfo('_handleOpenRepository: ' + repo.rootUri.toString());
-		this._addWorkspaceRepo(repo);
-	}
-
-	private _handleDidChangeState(state: APIState) {
-		this._loggingService.logInfo('_handleDidChangeState: ' + state);
-
-		if (state === 'initialized') {
-			this._loadRepositories();
-		}
+		});
 	}
 }
