@@ -30,6 +30,7 @@
 	"extensionDependencies": [
 		"vscode.git"
 	],
+	"extensionKind": ["ui"],
 	"activationEvents": [
 		"workspaceContains:.git",
 		"workspaceContains:**/.gitignore",
