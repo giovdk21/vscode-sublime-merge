@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.1.0] - 2020-08-07
+
+- Added support for nested repositories; now the extension works also when a GIT repository
+is not opened as the root folder of a project or workspace
+- Fix: the extension should no longer trigger a "Command '...' resulted in an error" message
+when trying to run one of the commands from a folder without a GIT repository
+
 ## [1.0.0] - 2020-06-13
 
 - Added configuration settings to customise contextual menu items visibility
