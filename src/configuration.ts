@@ -12,6 +12,10 @@ export class Configuration {
 		return workspace.getConfiguration(configId).get<boolean>('showInStatusBar') || false;
 	}
 
+	get showBranchNameInStatusBar(): boolean {
+		return workspace.getConfiguration(configId).get<boolean>('showBranchName') || false;
+	}
+
 	get debugEnabled() {
 		return workspace.getConfiguration(configId).get<boolean>('debug') || false;
 	}

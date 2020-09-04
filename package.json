@@ -144,6 +144,11 @@
 					"default": true,
 					"description": "Set to false to disable the Sublime Merge for VSCode status bar item"
 				},
+				"vscsm.showBranchName": {
+					"type": "boolean",
+					"default": false,
+					"description": "If enabled, it will also show the current branch name in the status bar"
+				},
 				"vscsm.showMenu.openInSublimeMerge": {
 					"type": "boolean",
 					"default": true,
