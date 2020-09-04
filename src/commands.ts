@@ -30,7 +30,7 @@ export class RegisterCommands {
 		});
 
 		let fileHistoryInSublimeMerge = vscode.commands.registerCommand('vscsm.fileHistoryInSublimeMerge', () => {
-			this._runSublimeMerge(['search', 'file:"' + this._currentFileRelativePathToRepo()]);
+			this._runSublimeMerge(['search', `file:"${this._currentFileRelativePathToRepo()}"`]);
 		});
 
 		let lineHistoryInSublimeMerge = vscode.commands.registerCommand('vscsm.lineHistoryInSublimeMerge', () => {
@@ -38,8 +38,8 @@ export class RegisterCommands {
 			if (editor) {
 				const selectionInfo = editor.selection;
 				const searchQuery =
-					'file:"' + this._currentFileRelativePathToRepo() +
-					'" line:' +
+					`file:"${this._currentFileRelativePathToRepo()}" ` +
+					'line:' +
 					String(selectionInfo.start.line + 1) +
 					'-' +
 					String(selectionInfo.end.line + 1);
@@ -65,14 +65,15 @@ export class RegisterCommands {
 		this._context.subscriptions.push(myCommitsInSublimeMerge);
 	}
 
-
 	private _runSublimeMerge(args: string[]) {
-		const path = this._getCurrentFileRepoPath();
+		const path = this._getCurrentRepoPath();
 		if (!path) {
-			return null;
+			return;
 		}
 
-		execFile('smerge', args, { cwd: path });
+		const proc = execFile('smerge', args, { cwd: path });
+		this._loggingService.logInfo(`Running "smerge" (pid: ${proc.pid})`);
+		proc.on('error', err => this._loggingService.logError(err.message));
 	}
 
 	private _currentFileUri(): vscode.Uri | null {
@@ -84,24 +85,31 @@ export class RegisterCommands {
 		return null;
 	}
 
-	private _getCurrentFileRepoPath(): string | null {
+	private _getCurrentRepoPath(): string | undefined {
 		const fileUri = this._currentFileUri();
 
 		if (fileUri) {
 			return this._getRepositoryPath(fileUri);
 		}
 
-		return null;
+		const workspaceRootFolder = this._workspaceRootFolder();
+		if (workspaceRootFolder) {
+			return this._getRepositoryPath(workspaceRootFolder);
+		}
 	}
 
-	private _getRepositoryPath(fileUri: vscode.Uri) {
+	private _workspaceRootFolder(): vscode.Uri | undefined {
+		if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0]) {
+			return vscode.workspace.workspaceFolders[0].uri;
+		}
+	}
+
+	private _getRepositoryPath(fileUri: vscode.Uri): string | undefined {
 		const repo = this._repositories.repoForFile(fileUri);
 
 		if (repo) {
 			return repo.rootUri.fsPath;
 		}
-
-		return null;
 	}
 
 	private _currentFileRelativePathToRepo(): string {
@@ -113,8 +121,8 @@ export class RegisterCommands {
 		return path.relative(repoPath, fileUri.fsPath);
 	}
 
-	private getGitConfig(param: string) {
-		const path = this._getCurrentFileRepoPath();
+	private getGitConfig(param: string): string | null {
+		const path = this._getCurrentRepoPath();
 		if (!path) {
 			return null;
 		}
