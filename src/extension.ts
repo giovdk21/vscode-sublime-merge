@@ -20,7 +20,7 @@ export function activate(context: ExtensionContext) {
 
 	registerCommands.init();
 
-	statusBar = new StatusBar(config.showInStatusBar, repositories, loggingService);
+	statusBar = new StatusBar(config, repositories, loggingService);
 	context.subscriptions.push(config.onDidShowInStatusBarChange(() => {
 		config.showInStatusBar ? statusBar.enable() : statusBar.disable();
 	}));

@@ -1,22 +1,25 @@
 'use strict';
 import * as vscode from 'vscode';
-import { API, APIState, GitExtension, Repository } from './api/git';
+import { Configuration } from './configuration';
+import { Repository } from './api/git';
 import { LoggingService } from './lib/LoggingService';
 import { Repositories } from './lib/Repositories';
 
 export class StatusBar {
+	private _config: Configuration;
 	private _statusBar: vscode.StatusBarItem;
 	private _loggingService: LoggingService;
 	private _subscriptions: vscode.Disposable[] = [];
 	private _repoSubscriptions: vscode.Disposable[] = [];
 	private _repositories: Repositories;
 
-	constructor(show: boolean, repositories: Repositories, loggingService: LoggingService) {
+	constructor(config: Configuration, repositories: Repositories, loggingService: LoggingService) {
+		this._config = config;
 		this._loggingService = loggingService;
 		this._repositories = repositories;
 		this._statusBar = this._setup();
 
-		if (show) {
+		if (config.showInStatusBar) {
 			this.enable();
 		}
 	}
@@ -114,11 +117,22 @@ export class StatusBar {
 	private _updateStatusBar(repo: Repository) {
 		const unstaged = repo.state.workingTreeChanges.length;
 		const staged = repo.state.indexChanges.length;
+		let statusBarText: string;
+
+		statusBarText = `$(git-branch) ${unstaged} $(git-commit) ${staged}`;
+
+		if (this._config.showBranchNameInStatusBar) {
+			statusBarText = `${this._getBranchName(repo)} ${statusBarText}`;
+		}
 
 		this._loggingService.logInfo(`Update Status Bar (${repo.rootUri.toString()})`);
 
-		this._statusBar.text = '$(git-branch) ' + unstaged + ' $(git-commit) ' + staged;
+		this._statusBar.text = statusBarText;
 		this._statusBar.tooltip = 'Open in Sublime Merge\n\nUnstaged: ' + unstaged + '\nTo be committed: ' + staged;
+	}
+
+	private _getBranchName(repo: Repository): string {
+		return repo.state.HEAD && repo.state.HEAD.name ? repo.state.HEAD.name : '';
 	}
 
 	private _updateStatusBarForActiveEditor() {
