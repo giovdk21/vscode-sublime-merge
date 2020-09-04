@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.2.0] - 2020-09-04
+- Added configuration setting to also display the branch name in the status bar item
+- Allow to open Sublime Merge with no files open if the project root folder has a GIT repository
+
 ## [1.1.0] - 2020-08-07
 
 - Added support for nested repositories; now the extension works also when a GIT repository
