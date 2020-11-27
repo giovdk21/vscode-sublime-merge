@@ -40,6 +40,7 @@ See: https://www.sublimemerge.com/docs/command_line
 	"vscsm.debug": false, // Enable debug information in the output panel; default: false
 	"vscsm.showInStatusBar": false, // Disables the status bar item if false; default: true
 	"vscsm.showBranchName": false, // Shows the current branch name in the status bar item; default: false
+	"vscsm.smergeExecutablePath": "", // Allows to specify the full path to the "smerge" executable
 
 	// Custom contextual menu items visibility:
 	// (see inline help for details)

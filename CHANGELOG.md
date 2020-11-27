@@ -1,5 +1,8 @@
 # Change Log
 
+## [1.3.0] - 2020-11-27
+- Added configuration setting that allows to specify the path of the "smerge" executable
+
 ## [1.2.0] - 2020-09-04
 - Added configuration setting to also display the branch name in the status bar item
 - Allow to open Sublime Merge with no files open if the project root folder has a GIT repository

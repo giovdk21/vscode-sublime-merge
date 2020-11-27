@@ -16,7 +16,7 @@ export function activate(context: ExtensionContext) {
 	const config = new Configuration();
 	const loggingService = new LoggingService(config);
 	repositories = new Repositories(loggingService);
-	const registerCommands = new RegisterCommands(context, repositories, loggingService);
+	const registerCommands = new RegisterCommands(config, context, repositories, loggingService);
 
 	registerCommands.init();
 
