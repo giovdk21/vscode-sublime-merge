@@ -2,15 +2,23 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { execFile, execFileSync } from 'child_process';
+import { Configuration } from './configuration';
 import { LoggingService } from './lib/LoggingService';
 import { Repositories } from './lib/Repositories';
 
 export class RegisterCommands {
+	private _config: Configuration;
 	private _context: vscode.ExtensionContext;
 	private _loggingService: LoggingService;
 	private _repositories: Repositories;
 
-	constructor(context: vscode.ExtensionContext, repositories: Repositories, loggingService: LoggingService) {
+	constructor(
+		config: Configuration,
+		context: vscode.ExtensionContext,
+		repositories: Repositories,
+		loggingService: LoggingService
+	) {
+		this._config = config;
 		this._context = context;
 		this._loggingService = loggingService;
 		this._repositories = repositories;
@@ -71,9 +79,24 @@ export class RegisterCommands {
 			return;
 		}
 
-		const proc = execFile('smerge', args, { cwd: path });
-		this._loggingService.logInfo(`Running "smerge" (pid: ${proc.pid})`);
-		proc.on('error', err => this._loggingService.logError(err.message));
+		const executablePath = this._config.smergeExecutablePath;
+		const proc = execFile(executablePath, args, { cwd: path });
+		this._loggingService.logInfo(`Running "${executablePath}" (pid: ${proc.pid})`);
+
+		proc.on('error', async err => {
+			const path = process.env.PATH;
+
+			this._loggingService.logError(err.message);
+			this._loggingService.logInfo(`PATH: ${path}`);
+
+			const openSettings = await vscode.window.showWarningMessage(
+				`Failed running "${executablePath}". The executable was not found in "${path}". `,
+				'Set or check "vscsm.smergeExecutablePath"'
+			);
+			if (openSettings) {
+				vscode.commands.executeCommand('workbench.action.openSettings');
+			}
+		});
 	}
 
 	private _currentFileUri(): vscode.Uri | null {

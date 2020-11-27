@@ -16,6 +16,10 @@ export class Configuration {
 		return workspace.getConfiguration(configId).get<boolean>('showBranchName') || false;
 	}
 
+	get smergeExecutablePath(): string {
+		return workspace.getConfiguration(configId).get<string>('smergeExecutablePath') || 'smerge';
+	}
+
 	get debugEnabled() {
 		return workspace.getConfiguration(configId).get<boolean>('debug') || false;
 	}

@@ -2,7 +2,7 @@
 	"name": "vscode-sublime-merge",
 	"displayName": "Sublime Merge for VSCode",
 	"description": "Open repository, file history, blame, etc.",
-	"version": "1.2.0",
+	"version": "1.3.0",
 	"license": "MIT",
 	"author": {
 		"name": "Giovanni Derks"
@@ -213,6 +213,10 @@
 						"Don't show"
 					],
 					"description": "Show the \"Blame in Sublime Merge\" command in the contextual menu"
+				},
+				"vscsm.smergeExecutablePath": {
+					"type": "string",
+					"description": "Allows to specify the full path to the \"smerge\" executable"
 				},
 				"vscsm.debug": {
 					"type": "boolean",
