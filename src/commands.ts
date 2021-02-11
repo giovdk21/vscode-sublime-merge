@@ -33,7 +33,7 @@ export class RegisterCommands {
 			const editor = vscode.window.activeTextEditor;
 			if (editor) {
 				const selectionInfo = editor.selection;
-				this._runSublimeMerge(['blame', editor.document.fileName, String(selectionInfo.start.line)]);
+				this._runSublimeMerge(['blame', this._currentFileRelativePathToRepo(), String(selectionInfo.start.line)]);
 			}
 		});
 
@@ -140,8 +140,9 @@ export class RegisterCommands {
 		if (!fileUri) { return ''; }
 		const repoPath = this._getRepositoryPath(fileUri);
 		if (!repoPath) { return ''; }
+		const repoUri = vscode.Uri.file(repoPath);
 
-		return path.relative(repoPath, fileUri.fsPath);
+		return path.posix.relative(repoUri.path, fileUri.path);
 	}
 
 	private getGitConfig(param: string): string | null {

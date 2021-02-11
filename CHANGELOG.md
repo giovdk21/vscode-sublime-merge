@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.3.1] - 2021-02-11
+- Fix an issue on Windows where an incorrect file path was given to Sublime Merge
+when opening the current file (file / line history, etc.)
+
 ## [1.3.0] - 2020-11-27
 - Added configuration setting that allows to specify the path of the "smerge" executable
 
