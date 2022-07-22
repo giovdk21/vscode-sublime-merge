@@ -78,4 +78,4 @@ See the [Changelog](CHANGELOG.md)
 ## Special Thanks
 
 I've been able to start working on this extension thanks to the personal development time kindly allowed
-by my current employer, [Altmetric](https://www.altmetric.com/jobs/).
+by my former employer, [Altmetric](https://www.altmetric.com/jobs/).
