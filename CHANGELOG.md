@@ -1,5 +1,8 @@
 # Change Log
 
+## [1.3.3] - 2022-07-22
+- Security fixes
+
 ## [1.3.2] - 2021-10-01
 - Security fixes
 
