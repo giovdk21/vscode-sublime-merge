@@ -16,6 +16,10 @@ export class Configuration {
 		return workspace.getConfiguration(configId).get<boolean>('showBranchName') || false;
 	}
 
+	get statusBarItemPosition(): string {
+		return workspace.getConfiguration(configId).get<string>('statusBarItemPosition') || 'right';
+	}
+
 	get smergeExecutablePath(): string {
 		return workspace.getConfiguration(configId).get<string>('smergeExecutablePath') || 'smerge';
 	}

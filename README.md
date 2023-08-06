@@ -20,7 +20,7 @@ customised changing the extension settings (see "Configuration").
 
 ![Status Bar](assets/status_bar.png)
 
-The extension shows the number of unstaged / to be committed files in the status bar. 
+The extension shows the number of unstaged / to be committed files in the status bar.  
 Clicking on the status bar item will open Sublime Merge.  
 It's possible to also show the current branch name
 in the status bar item using the `showBranchName` setting.
@@ -39,6 +39,7 @@ See: https://www.sublimemerge.com/docs/command_line
 {
 	"vscsm.debug": false, // Enable debug information in the output panel; default: false
 	"vscsm.showInStatusBar": false, // Disables the status bar item if false; default: true
+	"vscsm.statusBarItemPosition": "left", // Allows to position the status bar item on the left; default: "right"
 	"vscsm.showBranchName": false, // Shows the current branch name in the status bar item; default: false
 	"vscsm.smergeExecutablePath": "", // Allows to specify the full path to the "smerge" executable
 
@@ -62,6 +63,7 @@ The following example (by [Rubén Robles](https://twitter.com/D8vjork/status/115
 	"editor_argument_format": "--goto ${file}:${line}:${col}"
 }
 ```
+
 These can be manually added to the Sublime Merge `Preferences.sublime-settings` file.
 
 ## Known Issues / TODO
