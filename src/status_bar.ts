@@ -17,7 +17,7 @@ export class StatusBar {
 		this._config = config;
 		this._loggingService = loggingService;
 		this._repositories = repositories;
-		this._statusBar = this._setup();
+		this._statusBar = this._setup(config.statusBarItemPosition);
 
 		if (config.showInStatusBar) {
 			this.enable();
@@ -98,8 +98,13 @@ export class StatusBar {
 		);
 	}
 
-	private _setup(): vscode.StatusBarItem {
-		const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
+	private _setup(position: string): vscode.StatusBarItem {
+		let statusBarConfig: [vscode.StatusBarAlignment, number?] = [vscode.StatusBarAlignment.Right];
+		if (position === "left") {
+			statusBarConfig = [vscode.StatusBarAlignment.Left, 100];
+		}
+
+		const statusBar = vscode.window.createStatusBarItem(...statusBarConfig);
 
 		statusBar.command = 'vscsm.openInSublimeMerge';
 		this._reset(statusBar);
