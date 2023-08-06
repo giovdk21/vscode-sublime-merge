@@ -6,6 +6,12 @@ import { Configuration } from './configuration';
 import { LoggingService } from './lib/LoggingService';
 import { Repositories } from './lib/Repositories';
 
+type PlatformsConfigObj = {
+	linux?: string;
+	osx?: string;
+	windows?: string;
+}
+
 export class RegisterCommands {
 	private _config: Configuration;
 	private _context: vscode.ExtensionContext;
@@ -73,13 +79,33 @@ export class RegisterCommands {
 		this._context.subscriptions.push(myCommitsInSublimeMerge);
 	}
 
+	private _getExecutablePath(smergeExecutablePath: string | PlatformsConfigObj) {
+		if (typeof smergeExecutablePath === 'string') {
+			return smergeExecutablePath;
+		}
+
+		if (typeof smergeExecutablePath === 'object') {
+			const platform = process.platform;
+
+			if (platform === 'win32' && smergeExecutablePath['windows']) {
+				return smergeExecutablePath['windows'];
+			} else if (platform === 'darwin' && smergeExecutablePath['osx']) {
+				return smergeExecutablePath['osx'];
+			} else if (['freebsd', 'linux', 'openbsd'].includes(platform) && smergeExecutablePath['linux']) {
+				return smergeExecutablePath['linux'];
+			}
+		}
+
+		return 'smerge';
+	}
+
 	private _runSublimeMerge(args: string[]) {
 		const path = this._getCurrentRepoPath();
 		if (!path) {
 			return;
 		}
 
-		const executablePath = this._config.smergeExecutablePath;
+		const executablePath = this._getExecutablePath(this._config.smergeExecutablePath);
 		const proc = execFile(executablePath, args, { cwd: path });
 		this._loggingService.logInfo(`Running "${executablePath}" (pid: ${proc.pid})`);
 
@@ -159,6 +185,6 @@ export class RegisterCommands {
 			return null;
 		}
 
-		return output.toString().trimRight();
+		return output.toString().trimEnd();
 	}
 }
