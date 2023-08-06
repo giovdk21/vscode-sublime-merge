@@ -221,8 +221,25 @@
 					"description": "Show the \"Blame in Sublime Merge\" command in the contextual menu"
 				},
 				"vscsm.smergeExecutablePath": {
-					"type": "string",
-					"description": "Allows to specify the full path to the \"smerge\" executable"
+					"type": [
+						"string",
+						"object"
+					],
+					"description": "Allows to specify the full path to the \"smerge\" executable",
+					"properties": {
+						"linux": {
+							"type": "string",
+							"description": "Full path to the \"smerge\" executable on Linux"
+						},
+						"osx": {
+							"type": "string",
+							"description": "Full path to the \"smerge\" executable on macOS"
+						},
+						"windows": {
+							"type": "string",
+							"description": "Full path to the \"smerge\" executable on Windows"
+						}
+					}
 				},
 				"vscsm.debug": {
 					"type": "boolean",
