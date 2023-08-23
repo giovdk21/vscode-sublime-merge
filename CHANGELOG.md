@@ -1,6 +1,6 @@
 # Change Log
 
-## [1.4.0] - 2024-08-06
+## [1.4.0] - 2023-08-06
 
 - The status bar item can now be positioned to the left (see settings; requires restart)
 - The path of the "smerge" executable can now be configured per-platform
