@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.4.1] - 2024-12-08
+
+- Extension boilerplate and dependencies updates
+
 ## [1.4.0] - 2023-08-06
 
 - The status bar item can now be positioned to the left (see settings; requires restart)
