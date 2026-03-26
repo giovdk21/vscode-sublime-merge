@@ -1,6 +1,7 @@
 'use strict';
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
 import { execFile, execFileSync } from 'child_process';
 import { Configuration } from './configuration';
 import { LoggingService } from './lib/LoggingService';
@@ -99,14 +100,90 @@ export class RegisterCommands {
 		return 'smerge';
 	}
 
-	private _runSublimeMerge(args: string[]) {
-		const path = this._getCurrentRepoPath();
-		if (!path) {
-			return;
+	/**
+	 * Resolves a URI to a local filesystem path.
+	 *
+	 * For devcontainer remote URIs (vscode-remote://dev-container+<hex>/...),
+	 * the hex-encoded authority contains the local host folder the container was
+	 * opened from.  We decode it and remap the container path to the equivalent
+	 * local path so that smerge (which runs on the host) receives a valid path.
+	 *
+	 * Falls back to uri.fsPath when the URI is not a recognised devcontainer URI
+	 * or when decoding fails.
+	 */
+	private _resolveToLocalPath(uri: vscode.Uri): string {
+		if (uri.scheme === 'file') {
+			return uri.fsPath;
 		}
 
+		if (uri.scheme === 'vscode-remote' && uri.authority.startsWith('dev-container+')) {
+			const hexPart = uri.authority.slice('dev-container+'.length);
+			try {
+				const decoded = Buffer.from(hexPart, 'hex').toString('utf8');
+
+				// The authority may encode a JSON object or a plain path string.
+				let localRoot: string;
+				if (decoded.startsWith('{')) {
+					const parsed = JSON.parse(decoded) as Record<string, string>;
+					localRoot = parsed.hostPath ?? parsed.localFolder ?? '';
+				} else {
+					localRoot = decoded;
+				}
+
+				// Validate it looks like an absolute path (Unix or Windows).
+				if (!localRoot || (!localRoot.startsWith('/') && !/^[A-Za-z]:/.test(localRoot))) {
+					return uri.fsPath;
+				}
+
+				// Normalize to resolve any ".." segments before use.
+				localRoot = path.normalize(localRoot);
+
+				// Map the container-side path back to the host path using the
+				// first workspace folder as the container workspace root.
+				const workspaceFolders = vscode.workspace.workspaceFolders;
+				if (workspaceFolders && workspaceFolders.length > 0) {
+					const containerRoot = workspaceFolders[0].uri.path;
+					if (uri.path.startsWith(containerRoot)) {
+						const relativePart = uri.path.slice(containerRoot.length);
+						return localRoot + (relativePart || '');
+					}
+				}
+
+				return localRoot;
+			} catch {
+				// Fall through to fsPath fallback.
+			}
+		}
+
+		return uri.fsPath;
+	}
+
+	/**
+	 * Walks up the directory tree from the given local path to find the nearest
+	 * directory containing a .git entry (file or folder), which is the root of
+	 * the innermost git repository containing that path.
+	 */
+	private _findNearestGitRoot(localPath: string): string | undefined {
+		let dir = fs.statSync(localPath).isDirectory() ? localPath : path.dirname(localPath);
+		while (true) {
+			if (fs.existsSync(path.join(dir, '.git'))) {
+				return dir;
+			}
+			const parent = path.dirname(dir);
+			if (parent === dir) { break; }
+			dir = parent;
+		}
+		return undefined;
+	}
+
+	private _runSublimeMerge(args: string[]) {
+		const repoPath = this._getCurrentRepoPath();
+		if (repoPath) { this._launchSublimeMerge(args, repoPath); }
+	}
+
+	private _launchSublimeMerge(args: string[], repoPath: string) {
 		const executablePath = this._getExecutablePath(this._config.smergeExecutablePath);
-		const proc = execFile(executablePath, args, { cwd: path });
+		const proc = execFile(executablePath, args, { cwd: repoPath });
 		this._loggingService.logInfo(`Running "${executablePath}" (pid: ${proc.pid})`);
 
 		proc.on('error', async err => {
@@ -127,8 +204,11 @@ export class RegisterCommands {
 
 	private _currentFileUri(): vscode.Uri | null {
 		const editor = vscode.window.activeTextEditor;
-		if (editor && editor.document.uri.scheme === 'file') {
-			return editor.document.uri;
+		if (editor) {
+			const uri = editor.document.uri;
+			if (uri.scheme === 'file' || uri.scheme === 'vscode-remote') {
+				return uri;
+			}
 		}
 
 		return null;
@@ -138,12 +218,44 @@ export class RegisterCommands {
 		const fileUri = this._currentFileUri();
 
 		if (fileUri) {
-			return this._getRepositoryPath(fileUri);
+			// Git API first: handles registered repos including nested (sortedByPathDepth picks innermost)
+			const repoPath = this._getRepositoryPath(fileUri);
+			if (repoPath) { return repoPath; }
+
+			// Fallback: filesystem walk (handles devcontainer/remote where git API may be unavailable,
+			// and nested repos not yet registered by the git extension)
+			try {
+				const localPath = this._resolveToLocalPath(fileUri);
+				const nearest = this._findNearestGitRoot(localPath);
+				if (nearest) {
+					this._loggingService.logInfo(`Nearest git root for ${localPath}: ${nearest}`);
+					return nearest;
+				}
+			} catch {}
 		}
 
 		const workspaceRootFolder = this._workspaceRootFolder();
 		if (workspaceRootFolder) {
-			return this._getRepositoryPath(workspaceRootFolder);
+			// Git API first
+			const repoPath = this._getRepositoryPath(workspaceRootFolder);
+			if (repoPath) { return repoPath; }
+
+			// Fallback: filesystem walk
+			try {
+				const workspaceLocalPath = this._resolveToLocalPath(workspaceRootFolder);
+				const nearest = this._findNearestGitRoot(workspaceLocalPath);
+				if (nearest) { return nearest; }
+				return workspaceLocalPath;
+			} catch {
+				return this._resolveToLocalPath(workspaceRootFolder);
+			}
+		}
+	}
+
+	private _getRepositoryPath(fileUri: vscode.Uri): string | undefined {
+		const repo = this._repositories.repoForFile(fileUri);
+		if (repo) {
+			return this._resolveToLocalPath(repo.rootUri);
 		}
 	}
 
@@ -153,33 +265,45 @@ export class RegisterCommands {
 		}
 	}
 
-	private _getRepositoryPath(fileUri: vscode.Uri): string | undefined {
-		const repo = this._repositories.repoForFile(fileUri);
-
-		if (repo) {
-			return repo.rootUri.fsPath;
-		}
-	}
-
 	private _currentFileRelativePathToRepo(): string {
 		const fileUri = this._currentFileUri();
 		if (!fileUri) { return ''; }
-		const repoPath = this._getRepositoryPath(fileUri);
-		if (!repoPath) { return ''; }
-		const repoUri = vscode.Uri.file(repoPath);
 
-		return path.posix.relative(repoUri.path, fileUri.path);
+		// Git API first: resolveToLocalPath on both URIs gives consistent host paths for devcontainer
+		const repo = this._repositories.repoForFile(fileUri);
+		if (repo) {
+			const repoLocalPath = this._resolveToLocalPath(repo.rootUri);
+			const fileLocalPath = this._resolveToLocalPath(fileUri);
+			return path.relative(repoLocalPath, fileLocalPath);
+		}
+
+		// Fallback: filesystem walk (devcontainer/remote where git API is unavailable)
+		try {
+			const localFilePath = this._resolveToLocalPath(fileUri);
+			const repoRoot = this._findNearestGitRoot(localFilePath);
+			if (repoRoot) {
+				return path.relative(repoRoot, localFilePath);
+			}
+		} catch {}
+
+		// Last resort: relative to the workspace folder.
+		const workspaceFolder = this._workspaceRootFolder();
+		if (workspaceFolder) {
+			return path.posix.relative(workspaceFolder.path, fileUri.path);
+		}
+
+		return '';
 	}
 
 	private getGitConfig(param: string): string | null {
-		const path = this._getCurrentRepoPath();
-		if (!path) {
+		const repoPath = this._getCurrentRepoPath();
+		if (!repoPath) {
 			return null;
 		}
 
 		let output;
 		try {
-			output = execFileSync('git', ['config', param], { cwd: path });
+			output = execFileSync('git', ['config', param], { cwd: repoPath });
 		} catch (e) {
 			this._loggingService.logError('Error while reading Git config (' + param + '): ' + e);
 			return null;

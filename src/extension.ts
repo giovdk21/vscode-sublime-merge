@@ -1,6 +1,7 @@
 'use strict';
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
+import * as vscode from 'vscode';
 import { ExtensionContext } from 'vscode';
 import { Configuration } from './configuration';
 import { LoggingService } from "./lib/LoggingService";
@@ -13,6 +14,7 @@ let repositories: Repositories;
 
 // this method is called when the extension is activated
 export function activate(context: ExtensionContext) {
+	vscode.window.showInformationMessage('SublimeMerge ext: activate() called');
 	const config = new Configuration();
 	const loggingService = new LoggingService(config);
 	repositories = new Repositories(loggingService);
@@ -28,6 +30,6 @@ export function activate(context: ExtensionContext) {
 
 // this method is called when the extension is deactivated
 export function deactivate() {
-	statusBar.disposeSubscriptions();
-	repositories.disposeSubscriptions();
+	statusBar?.disposeSubscriptions();
+	repositories?.disposeSubscriptions();
 }
