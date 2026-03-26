@@ -14,7 +14,7 @@ let repositories: Repositories;
 
 // this method is called when the extension is activated
 export function activate(context: ExtensionContext) {
-	vscode.window.showInformationMessage('SublimeMerge ext: activate() called');
+	// vscode.window.showInformationMessage('SublimeMerge ext: activate() called');
 	const config = new Configuration();
 	const loggingService = new LoggingService(config);
 	repositories = new Repositories(loggingService);
