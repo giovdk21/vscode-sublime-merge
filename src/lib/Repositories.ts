@@ -39,6 +39,7 @@ export class Repositories {
 							this._setupSubscriptions();
 						}
 					});
+					this._subscriptions.push(disposable);
 				} else {
 					this._loggingService.logInfo('Git extension not available (remote or restricted environment)');
 				}

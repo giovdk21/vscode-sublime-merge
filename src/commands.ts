@@ -178,7 +178,11 @@ export class RegisterCommands {
 
 	private _runSublimeMerge(args: string[]) {
 		const repoPath = this._getCurrentRepoPath();
-		if (repoPath) { this._launchSublimeMerge(args, repoPath); }
+		if (repoPath) {
+			this._launchSublimeMerge(args, repoPath);
+		} else {
+			vscode.window.showWarningMessage('No Git repository found in the current workspace.');
+		}
 	}
 
 	private _launchSublimeMerge(args: string[], repoPath: string) {
