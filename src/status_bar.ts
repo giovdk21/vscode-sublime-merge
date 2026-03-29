@@ -12,6 +12,7 @@ export class StatusBar {
 	private _subscriptions: vscode.Disposable[] = [];
 	private _repoSubscriptions: vscode.Disposable[] = [];
 	private _repositories: Repositories;
+	private _lastActiveRepo: Repository | null = null;
 
 	constructor(config: Configuration, repositories: Repositories, loggingService: LoggingService) {
 		this._config = config;
@@ -26,7 +27,13 @@ export class StatusBar {
 
 	enable() {
 		this._loggingService.logInfo('Enabling Status Bar');
-		this._setupRepositories();
+		
+		if (this._repositories.isInitialized) {
+			this._loggingService.logInfo('StatusBar: Repos already initialized, triggering update');
+			this._setupRepositories();
+			this._handleActiveTextEditorChange(vscode.window.activeTextEditor);
+		}
+		
 		this._setupSubscriptions();
 		this._statusBar.show();
 	}
@@ -61,10 +68,15 @@ export class StatusBar {
 				this._repositories.onRepositoriesDidChange(() => {
 					this._resetRepositories();
 					this._setupRepositories();
+					this._handleActiveTextEditorChange(vscode.window.activeTextEditor);
 				})
 			);
 
-			this._subscriptions.push(this._repositories.onDidInitialize(this._setupRepositories, this));
+			this._subscriptions.push(this._repositories.onDidInitialize(() => {
+				this._resetRepositories();
+				this._setupRepositories();
+				this._handleActiveTextEditorChange(vscode.window.activeTextEditor);
+			}, this));
 
 			this._loggingService.logInfo('Setup Subscriptions (' + this._subscriptions.length + ')');
 		}
@@ -149,7 +161,20 @@ export class StatusBar {
 
 	private _editorRepository(editor: vscode.TextEditor | undefined): Repository | null {
 		if (editor) {
-			return this._repositories.repoForFile(editor.document.uri);
+			const repo = this._repositories.repoForFile(editor.document.uri);
+			if (repo) {
+				this._lastActiveRepo = repo;
+				return repo;
+			}
+		}
+
+		if (this._lastActiveRepo && this._repositories.repositories.includes(this._lastActiveRepo)) {
+			return this._lastActiveRepo;
+		}
+
+		if (this._repositories.repositories.length > 0) {
+			this._lastActiveRepo = this._repositories.repositories[0];
+			return this._lastActiveRepo;
 		}
 
 		return null;

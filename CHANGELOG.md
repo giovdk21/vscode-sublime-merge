@@ -1,5 +1,11 @@
 # Change Log
 
+## [1.5.2] - 2026-03-29
+
+- Correctly await Git extension activation to ensure reliable initialization in DevContainers and remote environments.
+- Fix race conditions where the status bar would remain hidden or fail to populate if Git repositories were discovered asynchronously.
+- Ensure the status bar remains visible when focusing output panels or files outside the workspace by falling back to the last active repository.
+
 ## [1.5.1] - 2026-03-29
 
 - Revert menu refactor from 1.5.0

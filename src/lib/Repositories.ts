@@ -9,6 +9,7 @@ export class Repositories {
 	private _loggingService: LoggingService;
 	private _subscriptions: vscode.Disposable[] = [];
 	private _initialized: boolean = false;
+	private _gitSubscribed: boolean = false;
 
 	private _InitializedEvent = new vscode.EventEmitter<any>();
 	public readonly onDidInitialize: vscode.Event<any> = this._InitializedEvent.event;
@@ -18,46 +19,51 @@ export class Repositories {
 
 	constructor(loggingService: LoggingService) {
 		this._loggingService = loggingService;
-		this._git = this._gitAPI;
+		this._git = null;
 
-		if (this._git) {
-			this._handleDidChangeState(this._git.state);
-			this._setupSubscriptions();
+		const gitExtension = vscode.extensions.getExtension<GitExtension>('vscode.git');
+		if (!gitExtension) {
+			this._loggingService.logInfo('Git extension not found');
+			return;
+		}
+
+		if (gitExtension.isActive) {
+			this._loggingService.logInfo('Git extension already active');
+			this._initFromGitExtension(gitExtension.exports);
 		} else {
-			// _gitAPI returns null when vscode.git is not yet active (timing issue on startup).
-			// Wait for it to become available via the extensions change event.
-			try {
-				const gitExtension = vscode.extensions.getExtension<GitExtension>('vscode.git');
-				if (gitExtension) {
-					const disposable = vscode.extensions.onDidChange(() => {
-						if (this._git) { disposable.dispose(); return; }
-						const api = this._gitAPI;
-						if (api) {
-							disposable.dispose();
-							this._git = api;
-							this._handleDidChangeState(this._git.state);
-							this._setupSubscriptions();
-						}
-					});
-					this._subscriptions.push(disposable);
-				} else {
-					this._loggingService.logInfo('Git extension not available (remote or restricted environment)');
+			this._loggingService.logInfo('Git extension not yet active, waiting for activation...');
+			gitExtension.activate().then(
+				(exports) => {
+					this._loggingService.logInfo('Git extension activated');
+					this._initFromGitExtension(exports);
+				},
+				(err) => {
+					this._loggingService.logInfo('Git extension activation failed: ' + err);
 				}
-			} catch {
-				this._loggingService.logInfo('Git extension not accessible in this environment');
-			}
+			);
 		}
 	}
 
-	private get _gitAPI(): API | null {
+	private _initFromGitExtension(gitExports: GitExtension) {
+		if (!gitExports.enabled) {
+			this._loggingService.logInfo('Git extension is disabled');
+			return;
+		}
+
 		try {
-			const gitExtension = vscode.extensions.getExtension<GitExtension>('vscode.git');
-			if (!gitExtension || !gitExtension.exports) {
-				return null;
-			}
-			return gitExtension.exports.getAPI(1);
-		} catch {
-			return null;
+			this._git = gitExports.getAPI(1);
+		} catch (e) {
+			this._loggingService.logInfo('Failed to get Git API: ' + e);
+			return;
+		}
+
+		this._setupSubscriptions();
+		this._handleDidChangeState(this._git.state);
+
+		// If repos were already discovered before we subscribed, notify listeners
+		if (this._initialized && this._git.repositories.length > 0) {
+			this._loggingService.logInfo('Repos already available: ' + this._git.repositories.length);
+			this._ChangedRepositoriesEvent.fire(true);
 		}
 	}
 
@@ -72,7 +78,8 @@ export class Repositories {
 	}
 
 	private _setupSubscriptions() {
-		if (this._git && this._subscriptions.length === 0) {
+		if (this._git && !this._gitSubscribed) {
+			this._gitSubscribed = true;
 			this._subscriptions.push(this._git.onDidOpenRepository(this._handleOpenRepository, this));
 			this._subscriptions.push(this._git.onDidChangeState(this._handleDidChangeState, this));
 		}
@@ -86,11 +93,16 @@ export class Repositories {
 	}
 
 	private _handleDidChangeState(state: APIState) {
+		this._loggingService.logInfo(`_handleDidChangeState: ${state}`);
 		if (state === 'initialized') {
 			this._loggingService.logInfo(`-- GIT ${state} --`);
 			this._initialized = true;
 			this._InitializedEvent.fire(true);
 		}
+	}
+
+	get isInitialized(): boolean {
+		return this._initialized;
 	}
 
 	get repositories(): Repository[] {
