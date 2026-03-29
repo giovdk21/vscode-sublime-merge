@@ -5,7 +5,7 @@ import { LoggingService } from './LoggingService';
 
 
 export class Repositories {
-	private _git: API;
+	private _git: API | null;
 	private _loggingService: LoggingService;
 	private _subscriptions: vscode.Disposable[] = [];
 	private _initialized: boolean = false;
@@ -20,13 +20,44 @@ export class Repositories {
 		this._loggingService = loggingService;
 		this._git = this._gitAPI;
 
-		this._handleDidChangeState(this._git.state);
-		this._setupSubscriptions();
+		if (this._git) {
+			this._handleDidChangeState(this._git.state);
+			this._setupSubscriptions();
+		} else {
+			// _gitAPI returns null when vscode.git is not yet active (timing issue on startup).
+			// Wait for it to become available via the extensions change event.
+			try {
+				const gitExtension = vscode.extensions.getExtension<GitExtension>('vscode.git');
+				if (gitExtension) {
+					const disposable = vscode.extensions.onDidChange(() => {
+						if (this._git) { disposable.dispose(); return; }
+						const api = this._gitAPI;
+						if (api) {
+							disposable.dispose();
+							this._git = api;
+							this._handleDidChangeState(this._git.state);
+							this._setupSubscriptions();
+						}
+					});
+				} else {
+					this._loggingService.logInfo('Git extension not available (remote or restricted environment)');
+				}
+			} catch {
+				this._loggingService.logInfo('Git extension not accessible in this environment');
+			}
+		}
 	}
 
-	private get _gitAPI(): API {
-		const gitExtension = vscode.extensions.getExtension<GitExtension>('vscode.git')!.exports;
-		return gitExtension.getAPI(1);
+	private get _gitAPI(): API | null {
+		try {
+			const gitExtension = vscode.extensions.getExtension<GitExtension>('vscode.git');
+			if (!gitExtension || !gitExtension.exports) {
+				return null;
+			}
+			return gitExtension.exports.getAPI(1);
+		} catch {
+			return null;
+		}
 	}
 
 	disposeSubscriptions() {
@@ -38,7 +69,7 @@ export class Repositories {
 	}
 
 	private _setupSubscriptions() {
-		if (this._subscriptions.length === 0) {
+		if (this._git && this._subscriptions.length === 0) {
 			this._subscriptions.push(this._git.onDidOpenRepository(this._handleOpenRepository, this));
 			this._subscriptions.push(this._git.onDidChangeState(this._handleDidChangeState, this));
 		}
@@ -63,7 +94,7 @@ export class Repositories {
 	}
 
 	get repositories(): Repository[] {
-		if (this._initialized) {
+		if (this._initialized && this._git) {
 			return this._git.repositories;
 		}
 
@@ -71,8 +102,6 @@ export class Repositories {
 	}
 
 	repoForFile(fileUri: vscode.Uri): Repository | null {
-		if (fileUri.scheme !== 'file') { return null; }
-
 		const sortedRepos = this.sortedByPathDepth();
 		const foundRepo = sortedRepos.find(
 			repo => fileUri.toString().startsWith(repo.rootUri.toString())

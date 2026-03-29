@@ -2,7 +2,7 @@
 	"name": "vscode-sublime-merge",
 	"displayName": "Sublime Merge for VSCode",
 	"description": "Open repository, file history, blame, etc.",
-	"version": "1.4.1",
+	"version": "1.5.0",
 	"license": "MIT",
 	"author": {
 		"name": "Giovanni Derks"
@@ -27,9 +27,6 @@
 		"log",
 		"history"
 	],
-	"extensionDependencies": [
-		"vscode.git"
-	],
 	"extensionKind": [
 		"ui"
 	],
@@ -43,23 +40,23 @@
 		"commands": [
 			{
 				"command": "vscsm.openInSublimeMerge",
-				"title": "Open repository in Sublime Merge"
+				"title": "Sublime Merge > Open repository"
 			},
 			{
 				"command": "vscsm.blameInSublimeMerge",
-				"title": "Blame in Sublime Merge"
+				"title": "Sublime Merge > Blame"
 			},
 			{
 				"command": "vscsm.fileHistoryInSublimeMerge",
-				"title": "File history in Sublime Merge"
+				"title": "Sublime Merge > File history"
 			},
 			{
 				"command": "vscsm.lineHistoryInSublimeMerge",
-				"title": "Line history in Sublime Merge"
+				"title": "Sublime Merge > Line history"
 			},
 			{
 				"command": "vscsm.myCommitsInSublimeMerge",
-				"title": "Show my commits in Sublime Merge"
+				"title": "Sublime Merge > Show my commits"
 			}
 		],
 		"menus": {
@@ -88,47 +85,47 @@
 			"editor/context": [
 				{
 					"command": "vscsm.openInSublimeMerge",
-					"when": "config.vscsm.showMenu.openInSublimeMerge && config.git.enabled && gitOpenRepositoryCount != 0",
+					"when": "config.vscsm.showMenu.openInSublimeMerge",
 					"group": "vscode_sublmerge@1"
 				},
 				{
 					"command": "vscsm.fileHistoryInSublimeMerge",
-					"when": "config.vscsm.showMenu.fileHistoryInSublimeMerge == 'always' && config.git.enabled && gitOpenRepositoryCount != 0",
+					"when": "config.vscsm.showMenu.fileHistoryInSublimeMerge == 'always'",
 					"group": "vscode_sublmerge@2"
 				},
 				{
 					"command": "vscsm.fileHistoryInSublimeMerge",
-					"when": "!editorHasSelection && config.vscsm.showMenu.fileHistoryInSublimeMerge == 'withoutSelection' && config.git.enabled && gitOpenRepositoryCount != 0",
+					"when": "!editorHasSelection && config.vscsm.showMenu.fileHistoryInSublimeMerge == 'withoutSelection'",
 					"group": "vscode_sublmerge@2"
 				},
 				{
 					"command": "vscsm.lineHistoryInSublimeMerge",
-					"when": "config.vscsm.showMenu.lineHistoryInSublimeMerge == 'always' && config.git.enabled && gitOpenRepositoryCount != 0",
+					"when": "config.vscsm.showMenu.lineHistoryInSublimeMerge == 'always'",
 					"group": "vscode_sublmerge@3"
 				},
 				{
 					"command": "vscsm.lineHistoryInSublimeMerge",
-					"when": "editorHasSelection && config.vscsm.showMenu.lineHistoryInSublimeMerge == 'withSelection' && config.git.enabled && gitOpenRepositoryCount != 0",
+					"when": "editorHasSelection && config.vscsm.showMenu.lineHistoryInSublimeMerge == 'withSelection'",
 					"group": "vscode_sublmerge@3"
 				},
 				{
 					"command": "vscsm.myCommitsInSublimeMerge",
-					"when": "config.vscsm.showMenu.myCommitsInSublimeMerge == 'always' && config.git.enabled && gitOpenRepositoryCount != 0",
+					"when": "config.vscsm.showMenu.myCommitsInSublimeMerge == 'always'",
 					"group": "vscode_sublmerge@4"
 				},
 				{
 					"command": "vscsm.myCommitsInSublimeMerge",
-					"when": "!editorHasSelection && config.vscsm.showMenu.myCommitsInSublimeMerge == 'withoutSelection' && config.git.enabled && gitOpenRepositoryCount != 0",
+					"when": "!editorHasSelection && config.vscsm.showMenu.myCommitsInSublimeMerge == 'withoutSelection'",
 					"group": "vscode_sublmerge@4"
 				},
 				{
 					"command": "vscsm.blameInSublimeMerge",
-					"when": "config.vscsm.showMenu.blameInSublimeMerge == 'always' && config.git.enabled && gitOpenRepositoryCount != 0",
+					"when": "config.vscsm.showMenu.blameInSublimeMerge == 'always'",
 					"group": "vscode_sublmerge@5"
 				},
 				{
 					"command": "vscsm.blameInSublimeMerge",
-					"when": "editorHasSelection && config.vscsm.showMenu.blameInSublimeMerge == 'withSelection'  && config.git.enabled && gitOpenRepositoryCount != 0",
+					"when": "editorHasSelection && config.vscsm.showMenu.blameInSublimeMerge == 'withSelection'",
 					"group": "vscode_sublmerge@5"
 				}
 			]
@@ -258,15 +255,16 @@
 		"test": "vscode-test"
 	},
 	"devDependencies": {
-		"@types/vscode": "^1.95.0",
 		"@types/mocha": "^10.0.9",
 		"@types/node": "20.x",
+		"@types/vscode": "^1.95.0",
 		"@typescript-eslint/eslint-plugin": "^8.10.0",
 		"@typescript-eslint/parser": "^8.7.0",
-		"eslint": "^9.13.0",
-		"typescript": "^5.6.3",
 		"@vscode/test-cli": "^0.0.10",
-		"@vscode/test-electron": "^2.4.1"
+		"@vscode/test-electron": "^2.4.1",
+		"@vscode/vsce": "^2.32.0",
+		"eslint": "^9.13.0",
+		"typescript": "^5.6.3"
 	},
 	"__metadata": {
 		"id": "d50227e3-7792-4230-8c3b-d92c0c67d4f0",
