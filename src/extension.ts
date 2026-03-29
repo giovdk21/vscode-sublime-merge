@@ -14,6 +14,7 @@ let repositories: Repositories;
 // this method is called when the extension is activated
 export function activate(context: ExtensionContext) {
 	const config = new Configuration();
+	context.subscriptions.push(config);
 	const loggingService = new LoggingService(config);
 	repositories = new Repositories(loggingService);
 	const registerCommands = new RegisterCommands(config, context, repositories, loggingService);

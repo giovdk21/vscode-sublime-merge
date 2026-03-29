@@ -40,7 +40,7 @@ export class StatusBar {
 	disposeSubscriptions() {
 		this._resetRepositories();
 		this._loggingService.logInfo('StatusBar: Dispose Subscriptions');
-		this._subscriptions.every(subscription => {
+		this._subscriptions.forEach(subscription => {
 			subscription.dispose();
 		});
 		this._subscriptions = [];
@@ -72,7 +72,7 @@ export class StatusBar {
 
 	private _disposeRepoSubscriptions() {
 		this._loggingService.logInfo('Dispose Repo Subscriptions');
-		this._repoSubscriptions.every(subscription => {
+		this._repoSubscriptions.forEach(subscription => {
 			subscription.dispose();
 		});
 		this._repoSubscriptions = [];
