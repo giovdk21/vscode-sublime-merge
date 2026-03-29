@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.5.0] - 2026-03-29
+
+- Added devcontainer compatibility and small menu refactor (#41, César Martínez Ibáñez / @cmartinezibanez-ionos)
+
 ## [1.4.1] - 2024-12-08
 
 - Extension boilerplate and dependencies updates
