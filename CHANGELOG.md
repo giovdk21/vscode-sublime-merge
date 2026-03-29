@@ -1,5 +1,19 @@
 # Change Log
 
+## [1.5.1] - 2026-03-29
+
+- Revert menu refactor from 1.5.0
+- Fix memory leak: properly dispose event emitters and config watcher
+- Fix array iteration: replace `.every()` with `.forEach()` for disposal loops
+- Fix `sortedByPathDepth()` to avoid mutating the original array
+- Add platform-specific configuration support for smerge executable path
+- Update minimum VS Code engine version to ^1.106.0
+- Update dev dependencies
+
+## [1.5.0] - 2026-03-29
+
+- Added devcontainer compatibility and small menu refactor (#41, César Martínez Ibáñez / @cmartinezibanez-ionos)
+
 ## [1.4.1] - 2024-12-08
 
 - Extension boilerplate and dependencies updates

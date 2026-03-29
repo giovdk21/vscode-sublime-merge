@@ -39,6 +39,7 @@ export class Repositories {
 							this._setupSubscriptions();
 						}
 					});
+					this._subscriptions.push(disposable);
 				} else {
 					this._loggingService.logInfo('Git extension not available (remote or restricted environment)');
 				}
@@ -62,10 +63,12 @@ export class Repositories {
 
 	disposeSubscriptions() {
 		this._loggingService.logInfo('Repositories: Dispose Subscriptions');
-		this._subscriptions.every(subscription => {
+		this._subscriptions.forEach(subscription => {
 			subscription.dispose();
 		});
 		this._subscriptions = [];
+		this._InitializedEvent.dispose();
+		this._ChangedRepositoriesEvent.dispose();
 	}
 
 	private _setupSubscriptions() {
@@ -79,10 +82,7 @@ export class Repositories {
 		if (!this._initialized) { return; }
 
 		this._loggingService.logInfo('_handleOpenRepository: ' + repo.rootUri.toString());
-
-		if (this._initialized) {
-			this._ChangedRepositoriesEvent.fire(true);
-		}
+		this._ChangedRepositoriesEvent.fire(true);
 	}
 
 	private _handleDidChangeState(state: APIState) {
@@ -114,7 +114,7 @@ export class Repositories {
 	}
 
 	sortedByPathDepth() {
-		return this.repositories.sort(
+		return [...this.repositories].sort(
 			(a, b) => {
 				return b.rootUri.path.length - a.rootUri.path.length;
 			}

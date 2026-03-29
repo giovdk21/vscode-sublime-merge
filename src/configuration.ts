@@ -1,5 +1,11 @@
 'use strict';
-import { ConfigurationChangeEvent, Event, EventEmitter, workspace } from 'vscode';
+import { ConfigurationChangeEvent, Disposable, Event, EventEmitter, workspace } from 'vscode';
+
+type PlatformsConfigObj = {
+	linux?: string;
+	osx?: string;
+	windows?: string;
+}
 
 const configId = 'vscsm';
 
@@ -20,8 +26,8 @@ export class Configuration {
 		return workspace.getConfiguration(configId).get<string>('statusBarItemPosition') || 'right';
 	}
 
-	get smergeExecutablePath(): string {
-		return workspace.getConfiguration(configId).get<string>('smergeExecutablePath') || 'smerge';
+	get smergeExecutablePath(): string | PlatformsConfigObj {
+		return workspace.getConfiguration(configId).get<string | PlatformsConfigObj>('smergeExecutablePath') || 'smerge';
 	}
 
 	get debugEnabled() {
@@ -31,11 +37,18 @@ export class Configuration {
 	private _showInStatusBarChangeEvent = new EventEmitter<ConfigurationChangeEvent>();
 	public readonly onDidShowInStatusBarChange: Event<ConfigurationChangeEvent> = this._showInStatusBarChangeEvent.event;
 
+	private _configWatcher: Disposable | undefined;
+
 	private _watchForChanges() {
-		workspace.onDidChangeConfiguration((e: ConfigurationChangeEvent) => {
+		this._configWatcher = workspace.onDidChangeConfiguration((e: ConfigurationChangeEvent) => {
 			if (e.affectsConfiguration(configId + '.showInStatusBar')) {
 				this._showInStatusBarChangeEvent.fire(e);
 			}
 		});
+	}
+
+	dispose() {
+		this._configWatcher?.dispose();
+		this._showInStatusBarChangeEvent.dispose();
 	}
 }

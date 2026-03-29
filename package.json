@@ -2,7 +2,7 @@
 	"name": "vscode-sublime-merge",
 	"displayName": "Sublime Merge for VSCode",
 	"description": "Open repository, file history, blame, etc.",
-	"version": "1.5.0",
+	"version": "1.5.1",
 	"license": "MIT",
 	"author": {
 		"name": "Giovanni Derks"
@@ -15,7 +15,7 @@
 	},
 	"icon": "icon.png",
 	"engines": {
-		"vscode": "^1.95.0"
+		"vscode": "^1.106.0"
 	},
 	"categories": [
 		"Other"
@@ -40,23 +40,23 @@
 		"commands": [
 			{
 				"command": "vscsm.openInSublimeMerge",
-				"title": "Sublime Merge > Open repository"
+				"title": "Open repository in Sublime Merge"
 			},
 			{
 				"command": "vscsm.blameInSublimeMerge",
-				"title": "Sublime Merge > Blame"
+				"title": "Blame in Sublime Merge"
 			},
 			{
 				"command": "vscsm.fileHistoryInSublimeMerge",
-				"title": "Sublime Merge > File history"
+				"title": "File history in Sublime Merge"
 			},
 			{
 				"command": "vscsm.lineHistoryInSublimeMerge",
-				"title": "Sublime Merge > Line history"
+				"title": "Line history in Sublime Merge"
 			},
 			{
 				"command": "vscsm.myCommitsInSublimeMerge",
-				"title": "Sublime Merge > Show my commits"
+				"title": "Show my commits in Sublime Merge"
 			}
 		],
 		"menus": {
@@ -257,11 +257,11 @@
 	"devDependencies": {
 		"@types/mocha": "^10.0.9",
 		"@types/node": "20.x",
-		"@types/vscode": "^1.95.0",
-		"@typescript-eslint/eslint-plugin": "^8.10.0",
-		"@typescript-eslint/parser": "^8.7.0",
-		"@vscode/test-cli": "^0.0.10",
-		"@vscode/test-electron": "^2.4.1",
+		"@types/vscode": "^1.106.0",
+		"@typescript-eslint/eslint-plugin": "^8.57.0",
+		"@typescript-eslint/parser": "^8.57.0",
+		"@vscode/test-cli": "^0.0.12",
+		"@vscode/test-electron": "^2.5.2",
 		"@vscode/vsce": "^2.32.0",
 		"eslint": "^9.13.0",
 		"typescript": "^5.6.3"
