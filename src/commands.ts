@@ -272,31 +272,36 @@ export class RegisterCommands {
 	private _currentFileRelativePathToRepo(): string {
 		const fileUri = this._currentFileUri();
 		if (!fileUri) { return ''; }
-
+	
+		let relativePath = '';
+	
 		// Git API first: resolveToLocalPath on both URIs gives consistent host paths for devcontainer
 		const repo = this._repositories.repoForFile(fileUri);
 		if (repo) {
 			const repoLocalPath = this._resolveToLocalPath(repo.rootUri);
 			const fileLocalPath = this._resolveToLocalPath(fileUri);
-			return path.relative(repoLocalPath, fileLocalPath);
+			relativePath = path.relative(repoLocalPath, fileLocalPath);
+		} else {
+			// Fallback: filesystem walk (devcontainer/remote where git API is unavailable)
+			try {
+				const localFilePath = this._resolveToLocalPath(fileUri);
+				const repoRoot = this._findNearestGitRoot(localFilePath);
+				if (repoRoot) {
+					relativePath = path.relative(repoRoot, localFilePath);
+				}
+			} catch {}
 		}
-
-		// Fallback: filesystem walk (devcontainer/remote where git API is unavailable)
-		try {
-			const localFilePath = this._resolveToLocalPath(fileUri);
-			const repoRoot = this._findNearestGitRoot(localFilePath);
-			if (repoRoot) {
-				return path.relative(repoRoot, localFilePath);
-			}
-		} catch {}
-
+	
 		// Last resort: relative to the workspace folder.
-		const workspaceFolder = this._workspaceRootFolder();
-		if (workspaceFolder) {
-			return path.posix.relative(workspaceFolder.path, fileUri.path);
+		if (!relativePath) {
+			const workspaceFolder = this._workspaceRootFolder();
+			if (workspaceFolder) {
+				relativePath = path.posix.relative(workspaceFolder.path, fileUri.path);
+			}
 		}
-
-		return '';
+	
+		// Normalize separators to forward slashes
+		return relativePath.replace(/\\/g, '/');
 	}
 
 	private getGitConfig(param: string): string | null {
