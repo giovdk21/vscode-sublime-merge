@@ -6,6 +6,7 @@ import { execFile, execFileSync } from 'child_process';
 import { Configuration } from './configuration';
 import { LoggingService } from './lib/LoggingService';
 import { Repositories } from './lib/Repositories';
+import { relativeLocalPath, relativeUriPath } from './lib/paths';
 
 type PlatformsConfigObj = {
 	linux?: string;
@@ -273,12 +274,11 @@ export class RegisterCommands {
 		const fileUri = this._currentFileUri();
 		if (!fileUri) { return ''; }
 
-		// Git API first: resolveToLocalPath on both URIs gives consistent host paths for devcontainer
+		// Git API first. URI paths use forward slashes and share the same base
+		// (container or host), so the relative segment is correct in both cases.
 		const repo = this._repositories.repoForFile(fileUri);
 		if (repo) {
-			const repoLocalPath = this._resolveToLocalPath(repo.rootUri);
-			const fileLocalPath = this._resolveToLocalPath(fileUri);
-			return path.relative(repoLocalPath, fileLocalPath);
+			return relativeUriPath(repo.rootUri.path, fileUri.path);
 		}
 
 		// Fallback: filesystem walk (devcontainer/remote where git API is unavailable)
@@ -286,14 +286,14 @@ export class RegisterCommands {
 			const localFilePath = this._resolveToLocalPath(fileUri);
 			const repoRoot = this._findNearestGitRoot(localFilePath);
 			if (repoRoot) {
-				return path.relative(repoRoot, localFilePath);
+				return relativeLocalPath(repoRoot, localFilePath);
 			}
 		} catch {}
 
 		// Last resort: relative to the workspace folder.
 		const workspaceFolder = this._workspaceRootFolder();
 		if (workspaceFolder) {
-			return path.posix.relative(workspaceFolder.path, fileUri.path);
+			return relativeUriPath(workspaceFolder.path, fileUri.path);
 		}
 
 		return '';
