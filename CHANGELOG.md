@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.5.3]
+
+- Fix broken file paths on Windows for file history, line history and blame commands by using forward slashes in Sublime Merge search/blame arguments (#44)
+
 ## [1.5.2] - 2026-03-29
 
 - Correctly await Git extension activation to ensure reliable initialization in DevContainers and remote environments.
