@@ -35,6 +35,13 @@ See: https://www.sublimemerge.com/docs/command_line
 
 ## Configuration
 
+File and line history use VS Code's `explorer.copyRelativePathSeparator` setting.
+On Windows, set it to `/` to avoid backslashes in Sublime Merge search queries:
+
+```json
+"explorer.copyRelativePathSeparator": "/"
+```
+
 ```js
 {
 	"vscsm.debug": false, // Enable debug information in the output panel; default: false
