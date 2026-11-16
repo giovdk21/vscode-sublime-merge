@@ -45,7 +45,7 @@ export class RegisterCommands {
 		});
 
 		let fileHistoryInSublimeMerge = vscode.commands.registerCommand('vscsm.fileHistoryInSublimeMerge', () => {
-			this._runSublimeMerge(['search', `file:"${this._currentFileRelativePathToRepo()}"`]);
+			this._runSublimeMerge(['search', `file:"${this._currentFileSearchPath()}"`]);
 		});
 
 		let lineHistoryInSublimeMerge = vscode.commands.registerCommand('vscsm.lineHistoryInSublimeMerge', () => {
@@ -53,7 +53,7 @@ export class RegisterCommands {
 			if (editor) {
 				const selectionInfo = editor.selection;
 				const searchQuery =
-					`file:"${this._currentFileRelativePathToRepo()}" ` +
+					`file:"${this._currentFileSearchPath()}" ` +
 					'line:' +
 					String(selectionInfo.start.line + 1) +
 					'-' +
@@ -267,6 +267,15 @@ export class RegisterCommands {
 		if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0]) {
 			return vscode.workspace.workspaceFolders[0].uri;
 		}
+	}
+
+	private _currentFileSearchPath(): string {
+		const relativePath = this._currentFileRelativePathToRepo();
+		if (!relativePath) { return ''; }
+
+		const configuredSeparator = vscode.workspace.getConfiguration('explorer').get<string>('copyRelativePathSeparator', 'auto');
+		const separator = configuredSeparator === 'auto' ? path.sep : configuredSeparator;
+		return path.normalize(relativePath).split(path.sep).join(separator);
 	}
 
 	private _currentFileRelativePathToRepo(): string {
